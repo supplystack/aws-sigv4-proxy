@@ -21,3 +21,25 @@ jobs:
 
       - name: Run tests
         run: go test -v ./...
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image & push
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          docker build -t ghcr.io/supplystack/aws-sigv4-proxy:$VERSION . 
+          docker push ghcr.io/supplystack/aws-sigv4-proxy:$VERSION
+          if [ "$VERSION" != "latest" ] ; then
+            docker tag ghcr.io/supplystack/aws-sigv4-proxy:$VERSION ghcr.io/supplystack/aws-sigv4-proxy:latest
+            docker push ghcr.io/supplystack/aws-sigv4-proxy:latest
+          fi
+
