@@ -36,10 +36,10 @@ jobs:
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           [ "$VERSION" == "master" ] && VERSION=latest
 
-          docker build -t ghcr.io/supplystack/aws-sigv4-proxy:$VERSION . 
-          docker push ghcr.io/supplystack/aws-sigv4-proxy:$VERSION
+          docker build -t ghcr.io/${{ github.repository }}:${VERSION} . 
+          docker push ghcr.io/${{ github.repository }}:${VERSION}
           if [ "$VERSION" != "latest" ] ; then
-            docker tag ghcr.io/supplystack/aws-sigv4-proxy:$VERSION ghcr.io/supplystack/aws-sigv4-proxy:latest
-            docker push ghcr.io/supplystack/aws-sigv4-proxy:latest
+            docker tag ghcr.io/${{ github.repository }}:${VERSION} ghcr.io/${{ github.repository }}:latest
+            docker push ghcr.io/${{ github.repository }}:latest
           fi
 
