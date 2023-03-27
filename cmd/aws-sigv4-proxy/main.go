@@ -42,9 +42,11 @@ var (
 	strip                  = kingpin.Flag("strip", "Headers to strip from incoming request").Short('s').Strings()
 	roleArn                = kingpin.Flag("role-arn", "Amazon Resource Name (ARN) of the role to assume").String()
 	signingNameOverride    = kingpin.Flag("name", "AWS Service to sign for").String()
+	signingHostOverride    = kingpin.Flag("sign-host", "Host to sign for").String()
 	hostOverride           = kingpin.Flag("host", "Host to proxy to").String()
 	regionOverride         = kingpin.Flag("region", "AWS region to sign for").String()
 	disableSSLVerification = kingpin.Flag("no-verify-ssl", "Disable peer SSL certificate validation").Bool()
+	idleConnTimeout        = kingpin.Flag("transport.idle-conn-timeout", "Idle timeout to the upstream service").Default("40s").Duration()
 )
 
 type awsLoggerAdapter struct {
@@ -90,6 +92,8 @@ func main() {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
+	http.DefaultTransport.(*http.Transport).IdleConnTimeout = *idleConnTimeout
+
 	var credentials *credentials.Credentials
 	if *roleArn != "" {
 		credentials = stscreds.NewCredentials(session, *roleArn, func(p *stscreds.AssumeRoleProvider) {
@@ -121,6 +125,7 @@ func main() {
 				Client:              client,
 				StripRequestHeaders: *strip,
 				SigningNameOverride: *signingNameOverride,
+				SigningHostOverride: *signingHostOverride,
 				HostOverride:        *hostOverride,
 				RegionOverride:      *regionOverride,
 				LogFailedRequest:    *logFailedResponse,
